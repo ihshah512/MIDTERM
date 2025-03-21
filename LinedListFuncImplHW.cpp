@@ -340,3 +340,129 @@ Both ensure a deep copy of the linked list, meaning each node is duplicated rath
 Let me know if you need further clarification or additional test cases!
 
 */
+
+/*
+– For the LinkedList class mentioned above implement an overloaded assignment operator.
+The assignment operator must create an exact deep copy of the rhs object. An exact copy means
+the order of the nodes in both lists will be the same. You are not allowed to call other functions
+from the class or the constructor. To write an efficient function all remove or insert operations
+must happen at the head of the list not at the tail. (15 points)
+
+*/
+
+
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+class Node {
+public:
+    Node() : m_next(nullptr), m_elem("") {}
+
+private:
+    string m_elem;  // element value
+    Node* m_next;   // next item in the list
+    friend class LinkedList;
+};
+
+class LinkedList {
+public:
+    LinkedList() : m_head(nullptr) {}
+    ~LinkedList() {
+        // Minimal destructor for cleanup (not using other functions here)
+        Node* current = m_head;
+        while (current != nullptr) {
+            Node* next = current->m_next;
+            delete current;
+            current = next;
+        }
+    }
+
+    // Overloaded assignment operator
+    const LinkedList& operator=(const LinkedList& rhs) {
+        // Step 1: Check for self-assignment
+        if (this != &rhs) {
+            // Step 2: Delete all nodes in the current list (remove from head)
+            Node* current = m_head;
+            while (current != nullptr) {
+                Node* next = current->m_next;
+                delete current;
+                current = next;
+            }
+            m_head = nullptr;  // List is now empty
+
+            // Step 3: Create a deep copy of rhs, inserting at head in reverse order
+            Node* rhs_current = rhs.m_head;
+            Node* new_head = nullptr;  // Temporary head for building the list
+
+            // First, copy all nodes from rhs
+            while (rhs_current != nullptr) {
+                Node* new_node = new Node();
+                new_node->m_elem = rhs_current->m_elem;
+                new_node->m_next = new_head;  // Insert at head
+                new_head = new_node;
+                rhs_current = rhs_current->m_next;
+            }
+
+            // Step 4: Reverse the list to match rhs order
+            m_head = nullptr;  // Final head starts as nullptr
+            while (new_head != nullptr) {
+                Node* temp = new_head;
+                new_head = new_head->m_next;
+                temp->m_next = m_head;  // Insert at head of final list
+                m_head = temp;
+            }
+        }
+        return *this;
+    }
+
+    // Helper function to print (for testing, not part of requirement)
+    void printList() {
+        Node* temp = m_head;
+        while (temp != nullptr) {
+            cout << temp->m_elem << " -> ";
+            temp = temp->m_next;
+        }
+        cout << "nullptr" << endl;
+    }
+
+    // Helper function to append (for testing, not used in operator=)
+    void append(const string& value) {
+        Node* new_node = new Node();
+        new_node->m_elem = value;
+        if (m_head == nullptr) {
+            m_head = new_node;
+        } else {
+            Node* temp = m_head;
+            while (temp->m_next != nullptr) {
+                temp = temp->m_next;
+            }
+            temp->m_next = new_node;
+        }
+    }
+
+private:
+    Node* m_head;  // Pointer to the head of the list
+};
+
+// Test code
+int main() {
+    LinkedList list1;
+    list1.append("A");
+    list1.append("B");
+    list1.append("C");
+    cout << "list1: ";
+    list1.printList();
+
+    LinkedList list2;
+    list2.append("X");
+    cout << "list2 before assignment: ";
+    list2.printList();
+
+    list2 = list1;  // Assignment operator
+    cout << "list2 after assignment: ";
+    list2.printList();
+
+    return 0;
+}
