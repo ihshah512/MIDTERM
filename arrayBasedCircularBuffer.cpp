@@ -41,6 +41,7 @@ public:
             std::cout << "Buffer is full! Cannot enqueue " << value << std::endl;
             return;
         }
+
         buffer[tail] = value;
         tail = (tail + 1) % capacity; // Move tail forward circularly
         count++;
@@ -81,7 +82,9 @@ public:
         for (int i = 0; i < count; i++)
         {
             std::cout << buffer[index] << " ";
+            // std::cout << std::endl;
             index = (index + 1) % capacity;
+            std::cout << "index is :" << index << std::endl;
         }
         std::cout << std::endl;
     }
@@ -96,9 +99,11 @@ int main()
     cb.enqueue(30);
     cb.enqueue(40);
     cb.enqueue(50);
+    cb.enqueue(60);
+    cb.enqueue(70);
     cb.printBuffer();
 
-    cb.enqueue(60); // Should indicate buffer is full
+     cb.enqueue(60); // Should indicate buffer is full
 
     std::cout << "Dequeued: " << cb.dequeue() << std::endl;
     cb.printBuffer();

@@ -11,7 +11,8 @@ public:
     }
 };
 
-class Stack {
+class Stack { //in stack we are only dealing with one end which is top
+                // In que we are dealing with both rear and top end
 private:
     Node* top; // Points to the top of the stack
 
