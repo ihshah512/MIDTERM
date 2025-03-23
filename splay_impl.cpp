@@ -1,263 +1,150 @@
 #include "SplayTree.h"
-#include <iostream>
-
-SplayNode::SplayNode(int value) : key(value), left(nullptr), right(nullptr), parent(nullptr) {}
+using namespace std;
 
 SplayTree::SplayTree() : root(nullptr) {}
 
-SplayTree::~SplayTree()
+Node *SplayTree::rightRotate(Node *x)
 {
-    deleteTree(root);
+    Node *y = x->left;
+    x->left = y->right;
+    y->right = x;
+    return y;
 }
 
-void SplayTree::deleteTree(SplayNode *node)
+Node *SplayTree::leftRotate(Node *x)
 {
-    if (node)
+    Node *y = x->right;
+    x->right = y->left;
+    y->left = x;
+    return y;
+}
+
+Node *SplayTree::splay(Node *root, int key)
+{
+    if (!root || root->key == key)
+        return root;
+
+    if (key < root->key)
     {
-        deleteTree(node->left);
-        deleteTree(node->right);
-        delete node;
+        if (!root->left)
+            return root;
+
+        if (key < root->left->key)
+        {
+            root->left->left = splay(root->left->left, key);
+            root = rightRotate(root);
+        }
+        else if (key > root->left->key)
+        {
+            root->left->right = splay(root->left->right, key);
+            if (root->left->right)
+                root->left = leftRotate(root->left);
+        }
+
+        return (root->left == nullptr) ? root : rightRotate(root);
+    }
+    else
+    {
+        if (!root->right)
+            return root;
+
+        if (key > root->right->key)
+        {
+            root->right->right = splay(root->right->right, key);
+            root = leftRotate(root);
+        }
+        else if (key < root->right->key)
+        {
+            root->right->left = splay(root->right->left, key);
+            if (root->right->left)
+                root->right = rightRotate(root->right);
+        }
+
+        return (root->right == nullptr) ? root : leftRotate(root);
     }
 }
 
-// Left Rotation (Zig for Right Child)
-/*
-Before:       After:
-    y            x
-   /            / \
-  x      =>    T1  y
-   \              /
-    T1           T2
-     \
-      T2
-*/
-void SplayTree::leftRotate(SplayNode *x)
+Node *SplayTree::insertUtil(Node *root, int key)
 {
-    SplayNode *y = x->parent;
-    SplayNode *T1 = x->left;
+    if (!root)
+        return new Node(key);
 
-    if (y->parent)
+    root = splay(root, key);
+
+    if (root->key == key)
+        return root;
+
+    Node *newNode = new Node(key);
+
+    if (key < root->key)
     {
-        if (y == y->parent->left)
-            y->parent->left = x;
-        else
-            y->parent->right = x;
+        newNode->right = root;
+        newNode->left = root->left;
+        root->left = nullptr;
     }
-    x->parent = y->parent;
-    y->parent = x;
-    x->left = y;
-    y->right = T1;
-    if (T1)
-        T1->parent = y;
-    if (x->parent == nullptr)
-        root = x;
+    else
+    {
+        newNode->left = root;
+        newNode->right = root->right;
+        root->right = nullptr;
+    }
+
+    return newNode;
 }
 
-// Right Rotation (Zig for Left Child)
-/*
-Before:       After:
-    x            y
-     \          / \
-      y   =>   x  T2
-     /            \
-    T1             T1
-   /
-  T2
-*/
-void SplayTree::rightRotate(SplayNode *x)
-{
-    SplayNode *y = x->parent;
-    SplayNode *T2 = y->left;
-
-    if (x->parent)
-    {
-        if (x == x->parent->left)
-            x->parent->left = y;
-        else
-            x->parent->right = y;
-    }
-    y->parent = x->parent;
-    x->parent = y;
-    y->left = x->right;
-    if (y->left)
-        y->left->parent = y;
-    x->right = y;
-    if (x->parent == nullptr)
-        root = x;
-}
-
-// Splay operation to move node x to root
-void SplayTree::splay(SplayNode *x)
-{
-    while (x->parent)
-    {
-        SplayNode *p = x->parent;
-        SplayNode *g = p->parent;
-
-        if (!g)
-        { // Zig step
-            if (x == p->left)
-                rightRotate(p);
-            else
-                leftRotate(x);
-        }
-        else if (x == p->left && p == g->left)
-        { // Zig-Zig (Left-Left)
-            rightRotate(g);
-            rightRotate(p);
-        }
-        else if (x == p->right && p == g->right)
-        { // Zig-Zig (Right-Right)
-            leftRotate(p);
-            leftRotate(x);
-        }
-        else if (x == p->right && p == g->left)
-        { // Zig-Zag (Left-Right)
-            leftRotate(x);
-            rightRotate(g);
-        }
-        else
-        { // Zig-Zag (Right-Left)
-            rightRotate(p);
-            leftRotate(x);
-        }
-    }
-}
-
-// Insert function with tree diagram
 void SplayTree::insert(int key)
 {
-    SplayNode *z = new SplayNode(key);
-    if (!root)
-    {
-        root = z;
-        return;
-    }
-
-    SplayNode *x = root;
-    SplayNode *p = nullptr;
-    while (x)
-    {
-        p = x;
-        if (key < x->key)
-            x = x->left;
-        else if (key > x->key)
-            x = x->right;
-        else
-        {
-            delete z; // Duplicate key
-            splay(p);
-            return;
-        }
-    }
-
-    z->parent = p;
-    if (key < p->key)
-        p->left = z;
-    else
-        p->right = z;
-
-    splay(z); // Move newly inserted node to root
+    root = insertUtil(root, key);
 }
 
-/* Insert Example Tree (Inserting 5 into tree with 10, 3)
-Initial:
-   10 (root)
-  /
- 3
-Insert 5:
-   10 (p)
-  /
- 3 (x)
-  \
-   5 (z) <- Newly inserted
-After Splay(z):
-   5 (root)
-  / \
- 3   10
-*/
+Node *SplayTree::deleteUtil(Node *root, int key)
+{
+    if (!root)
+        return nullptr;
 
-// Remove function with tree diagram
+    root = splay(root, key);
+
+    if (root->key != key)
+        return root;
+
+    if (!root->left)
+    {
+        Node *temp = root->right;
+        delete root;
+        return temp;
+    }
+    else
+    {
+        Node *temp = splay(root->left, key);
+        temp->right = root->right;
+        delete root;
+        return temp;
+    }
+}
+
 void SplayTree::remove(int key)
 {
-    SplayNode *x = search(key);
-    if (!x)
-        return;
-
-    splay(x); // Move node to delete to root
-    SplayNode *leftTree = root->left;
-    SplayNode *rightTree = root->right;
-
-    delete root;
-    if (leftTree)
-        leftTree->parent = nullptr;
-    if (rightTree)
-        rightTree->parent = nullptr;
-
-    if (!leftTree)
-        root = rightTree;
-    else
-    {
-        root = leftTree;
-        SplayNode *max = findMax(leftTree);
-        splay(max);
-        root->right = rightTree;
-        if (rightTree)
-            rightTree->parent = root;
-    }
+    root = deleteUtil(root, key);
 }
 
-/* Remove Example Tree (Removing 10 from tree with 10, 5, 15)
-Initial:
-   10 (root)
-  /  \
- 5    15
-After splay(10):
-   10 (root)
-  /  \
- 5    15
-After Remove:
-   5 (root)
-    \
-     15
-*/
-
-// Search function
-SplayNode *SplayTree::search(int key)
+Node *SplayTree::find(int key)
 {
-    SplayNode *x = root;
-    while (x)
-    {
-        if (key == x->key)
-        {
-            splay(x);
-            return x;
-        }
-        else if (key < x->key)
-            x = x->left;
-        else
-            x = x->right;
-    }
-    return nullptr;
+    root = splay(root, key);
+    return (root && root->key == key) ? root : nullptr;
 }
 
-// Find maximum node in a subtree
-SplayNode *SplayTree::findMax(SplayNode *node)
+void SplayTree::printTree()
 {
-    while (node->right)
-        node = node->right;
-    return node;
+    inorder(root);
+    cout << endl;
 }
 
-// Utility to print tree
-void SplayTree::printTree(SplayNode *node, int level)
+void SplayTree::inorder(Node *root)
 {
-    if (node)
+    if (root)
     {
-        printTree(node->right, level + 1);
-        for (int i = 0; i < level; i++)
-            std::cout << "  ";
-        std::cout << node->key << std::endl;
-        printTree(node->left, level + 1);
+        inorder(root->left);
+        cout << root->key << " ";
+        inorder(root->right);
     }
 }

@@ -1,34 +1,36 @@
 #ifndef SPLAYTREE_H
 #define SPLAYTREE_H
 
-class SplayNode {
-public:
-    int key;
-    SplayNode* left;
-    SplayNode* right;
-    SplayNode* parent;
+#include <iostream>
 
-    SplayNode(int value);
+struct Node
+{
+    int key;
+    Node *left;
+    Node *right;
+
+    Node(int k) : key(k), left(nullptr), right(nullptr) {}
 };
 
-class SplayTree {
+class SplayTree
+{
 private:
-    SplayNode* root;
+    Node *root;
 
-    void leftRotate(SplayNode* x);
-    void rightRotate(SplayNode* x);
-    void splay(SplayNode* x);
-    SplayNode* findMax(SplayNode* node);
-    SplayNode* join(SplayNode* t1, SplayNode* t2);
+    Node *rightRotate(Node *x);
+    Node *leftRotate(Node *x);
+    Node *splay(Node *root, int key);
+    Node *insertUtil(Node *root, int key);
+    Node *deleteUtil(Node *root, int key);
+    Node *findMax(Node *node);
 
 public:
     SplayTree();
-    ~SplayTree();
     void insert(int key);
     void remove(int key);
-    SplayNode* search(int key);
-    void printTree(SplayNode* node, int level = 0);
-    void deleteTree(SplayNode* node);
+    Node *find(int key);
+    void printTree();
+    void inorder(Node *root);
 };
 
 #endif // SPLAYTREE_H
